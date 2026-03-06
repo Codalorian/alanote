@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import tkinter as tk
 from ui import ui
 
@@ -17,6 +17,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-=======
 
->>>>>>> 21633174a4a34392b29db9d7ab4684c53aa0cf73
