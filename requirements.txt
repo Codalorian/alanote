@@ -1,10 +1,8 @@
-<<<<<<< HEAD
 SpeechRecognition
 pyaudio
 scipy
 numpy
-=======
 pyttsx3
 ollama
 SpeechRecognition
->>>>>>> 21633174a4a34392b29db9d7ab4684c53aa0cf73
+pydub
