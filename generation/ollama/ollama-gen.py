@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 """Generate study notes from a recorded audio file using Ollama.
 
@@ -54,12 +55,16 @@ model = model or "llama2"
 try:
     from ollama import chat
     print(f"Using ollama python API with model {model}")
-    result = chat(model=model, messages=[{"role":"user","content":prompt}], stream=False)
-    # result may be a generator
-    if hasattr(result, '__iter__'):
-        notes = ''.join(part.get('message', {}).get('content','') for part in result)
-    else:
-        notes = str(result)
+    stream = chat(model=model, messages=[{"role":"user","content":prompt}], stream=True)
+    # stream=True returns a generator of message chunks
+    notes = ""
+    for chunk in stream:
+        if hasattr(chunk, 'message') and hasattr(chunk.message, 'content'):
+            notes += chunk.message.content
+        else:
+            # handle error or unexpected response
+            print(f"Unexpected response chunk: {chunk}")
+            break
     print("\nGenerated notes:\n", notes)
 except ImportError:
     # fallback to CLI
@@ -76,4 +81,3 @@ except ImportError:
         print("Error running ollama CLI:", e)
 except Exception as e:
     print("Error invoking ollama python API:", e)
-
