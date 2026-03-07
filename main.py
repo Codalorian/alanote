@@ -65,12 +65,17 @@ def main():
         # try using Python ollama package first
         try:
             from ollama import chat
-            stream = chat(model=model, messages=[{"role":"user","content":prompt}], stream=False)
-            # if stream returns generator-like
-            if hasattr(stream, '__iter__'):
-                notes = ''.join(part.get('message', {}).get('content','') for part in stream)
-            else:
-                notes = str(stream)
+            print(f"Using ollama python API with model {model}")
+            stream = chat(model=model, messages=[{"role":"user","content":prompt}], stream=True)
+            # stream=True returns a generator of message chunks
+            notes = ""
+            for chunk in stream:
+                if hasattr(chunk, 'message') and hasattr(chunk.message, 'content'):
+                    notes += chunk.message.content
+                else:
+                    # handle error or unexpected response
+                    print(f"Unexpected response chunk: {chunk}")
+                    break
             print("Generated notes:\n", notes)
         except ImportError:
             # fallback to CLI
@@ -95,4 +100,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
