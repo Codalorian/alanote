@@ -1,7 +1,7 @@
-
 import tkinter as tk
 from ui import ui
 import os
+import subprocess
 
 def save_model_choice(choice: str):
     """Write the selected model name to model.txt."""
@@ -21,6 +21,20 @@ def load_model_choice() -> str:
         return "claude"
 
 
+def get_ollama_models() -> list:
+    """Return list of installed Ollama models."""
+    try:
+        result = subprocess.run(['ollama', 'list'], capture_output=True, text=True, check=True)
+        lines = result.stdout.strip().split('\n')
+        if len(lines) > 1:
+            models = [line.split()[0] for line in lines[1:] if line.strip()]
+            return models
+        return []
+    except Exception as e:
+        print("Error getting ollama models:", e)
+        return []
+
+
 def main():
     root = tk.Tk()
     root.title("Alanote")
@@ -31,10 +45,53 @@ def main():
 
     # dropdown for model selection
     options = ["claude", "chatgpt", "grok", "ollama"]
-    selected = tk.StringVar(value=load_model_choice())
-    dropdown = tk.OptionMenu(root, selected, *options,
-                              command=lambda v: save_model_choice(v))
+    selected = tk.StringVar()
+    selected_ollama = tk.StringVar()
+    
+    # Load the saved model
+    full_model = load_model_choice()
+    if full_model in options:
+        selected.set(full_model)
+    else:
+        selected.set('ollama')
+        selected_ollama.set(full_model)
+    
+    def on_model_change(choice):
+        if choice == 'ollama':
+            models = get_ollama_models()
+            if models:
+                if not selected_ollama.get() or selected_ollama.get() not in models:
+                    selected_ollama.set(models[0])
+                ollama_dropdown['menu'].delete(0, 'end')
+                for model in models:
+                    ollama_dropdown['menu'].add_command(label=model, command=tk._setit(selected_ollama, model))
+                ollama_dropdown.pack(pady=10)
+                current_model_label.config(text=f"Selected model: {selected_ollama.get()}")
+                current_model_label.pack(pady=5)
+            else:
+                ollama_dropdown.pack_forget()
+                current_model_label.pack_forget()
+        else:
+            selected_ollama.set('')
+            ollama_dropdown.pack_forget()
+            current_model_label.pack_forget()
+        save_model_choice(choice if choice != 'ollama' else selected_ollama.get())
+    
+    def on_ollama_model_change(model):
+        save_model_choice(model)
+        current_model_label.config(text=f"Selected model: {model}")
+    
+    dropdown = tk.OptionMenu(root, selected, *options, command=on_model_change)
     dropdown.pack(pady=10)
+    
+    ollama_dropdown = tk.OptionMenu(root, selected_ollama, "", command=on_ollama_model_change)
+    ollama_dropdown.pack_forget()  # hide initially
+    
+    current_model_label = tk.Label(root, text="")
+    current_model_label.pack_forget()
+    
+    # Trigger initial setup
+    on_model_change(selected.get())
 
     # Create the record audio window in the same event loop
     ui.record_audio(root)
@@ -100,3 +157,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
