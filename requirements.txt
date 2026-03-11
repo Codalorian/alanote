@@ -6,3 +6,5 @@ pyttsx3
 ollama
 SpeechRecognition
 pydub
+requests
+anthropic
